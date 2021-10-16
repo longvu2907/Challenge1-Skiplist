@@ -1,14 +1,19 @@
 ﻿#include "Header.h"
 
-SNode* createNode(int value, int currentLevel) {
+SNode* createNode(int value, int level) {
 	SNode* node = new SNode;
 
+	//gán node mới tạo với các giá trị truyền vào
 	node->value = value;
-	node->currentLevel = currentLevel;
-	node->next = new SNode * [currentLevel];
-	node->width = new int[currentLevel];
+	node->level = level;
+	//Khởi tạo danh sách con trỏ next 
+	node->next = new SNode * [level];
+	//Khởi tạo danh sách chứa độ rộng của liên kết các tầng 
+	node->width = new int[level];
 
-	for (int i = 0; i < currentLevel; i++) {
+	//Gán con trỏ next ở các tầng ban đầu bằng NULL (đuôi của Skiplist)
+	//Gán độ rộng ban đầu bằng 1
+	for (int i = 0; i < level; i++) {
 		node->next[i] = NULL;
 		node->width[i] = 1;
 	}
@@ -22,16 +27,18 @@ void initList(SkipList& list) {
 }
 
 int randomLevel(SkipList list) {
-	int currentLevel = 1;
+	int level = 1;
 
 	//Tăng level dựa trên xác suất 50%
-	while (currentLevel < list.maxLevel && (rand() % 2) == 0) currentLevel++;
+	while (level < list.maxLevel && (rand() % 2) == 0) level++;
 
-	return currentLevel;
+	return level;
 }
 int levelBasedOnVal(int val) {
 	int k = 1;
 
+	//Phân tích value thành các thừa số nguyên tố  val = 2^k * x1 * x2 * ... * xn.
+	//k + 1 là level của node 
 	while (val % 2 == 0) {
 		val /= 2;
 		k++;
@@ -49,12 +56,15 @@ void increaseMaxLevel(SkipList& list, int val, bool isRandomLevel) {
 	//Ngược lại tăng max level dựa trên value của node mới thêm
 	else list.maxLevel = max(int(ceil(log2(val + 1))), list.maxLevel);
 
+	//Tạo ra head mới với max level mới tính được
 	SNode* newHead = createNode(-1, list.maxLevel);
 
+	//gán các con trỏ next ở các tầng của head cũ vào head mới tạo
 	for (int i = 0; i < prevMaxLevel; i++) {
 		newHead->next[i] = prevHead->next[i];
 		newHead->width[i] = prevHead->width[i];
 	}
+	//gán độ rộng liên kết ở các tầng mới sinh ra
 	for (int i = prevMaxLevel; i < list.maxLevel; i++) {
 		newHead->width[i] = list.size + 1;
 	}
@@ -73,9 +83,12 @@ int countDigits(int val) {
 }
 SNode* getByIndex(int index, SkipList list) {
 	SNode* node = list.head;
-
 	index++;
+
+	//Duyệt qua các tầng từ tầng cao nhất
 	for (int j = list.currentLevel - 1; j >= 0; j--) {
+		//Nếu độ rộng liên kết nhỏ hơn index thì sẽ chạy qua tiếp node tiếp theo ở cùng tầng 
+		//giảm index đi số lượng bằng độ rộng của liên kết đó
 		while (node->width[j] <= index) {
 			index -= node->width[j];
 			node = node->next[j];
@@ -170,10 +183,15 @@ void removeNode(int value, SkipList& list) {
 		return;
 	}
 
-	int removedNodeLevel = current->next[0]->currentLevel;
+	//gán level của node cần remove
+	int removedNodeLevel = current->next[0]->level;
 	for (int i = removedNodeLevel - 1; i >= 0; i--) {
+		//thay đổi liên kết của node trước node remove
 		update[i]->width[i] += update[i]->next[i]->width[i] - 1;
 		update[i]->next[i] = update[i]->next[i]->next[i];
+
+		//giảm số lượng tầng hiện tại nếu node bị remove đang ở tầng cao nhất
+		if (update[i]->next[i] == NULL) list.currentLevel--;
 	}
 
 	//Giảm độ rộng liên kết của head cuối Skiplist từ tầng hiện tại đến tầng cao nhất
@@ -211,11 +229,15 @@ void searchValue(int value, SkipList list) {
 	SNode** traversePath = new SNode * [list.maxLevel];
 	int traversePathIndex = 0;
 
+	//đi từ tầng cao nhất xuống
 	for (int i = list.currentLevel - 1; i >= 0; i--) {
+		//Lưu lại node đã đi qua
 		traversePath[traversePathIndex] = current;
 		traversePathIndex++;
+		//Đi qua node tiếp theo ở tầng đó nếu giá trị tiếp theo <= value
 		while (current->next[i] != NULL && current->next[i]->value <= value) {
 			current = current->next[i];
+			//Lưu lại node đã đi qua
 			traversePath[traversePathIndex] = current;
 			traversePathIndex++;
 		}
@@ -228,7 +250,7 @@ void searchValue(int value, SkipList list) {
 		return;
 	}
 
-	cout << "Level of "<< value << ": " << current->currentLevel << endl;
+	cout << "Level of "<< value << ": " << current->level << endl;
 	cout << "Traverse path: ";
 	for (int j = 0; j < traversePathIndex; j++) {
 		if (traversePath[j]->value == -1) cout << "HEAD ";
@@ -282,15 +304,18 @@ void handleCommandLine(string commandLine, SkipList& list) {
 	argumentList[index] = commandLine;
 	string command = argumentList[0];
 
+	//Tạo Skiplist mới 
 	if (command == "New") {
 		int n;
 		bool isRandomLevel = false;
 		int i = 0;
+		//Nếu có tham số -r thì tạo level cho các node ngẫu nhiên
 		if (argumentList[1] == "-r") {
 			i = 1;
 			n = stoi(argumentList[2]) + 1;
 			isRandomLevel = true;
-		}
+		} 
+		//Ngược lại tạo level cho node dựa trên value của nó
 		else n = stoi(argumentList[1]);
 		int* arr = new int[n];
 
@@ -300,33 +325,43 @@ void handleCommandLine(string commandLine, SkipList& list) {
 
 		buildList(arr, n, list, isRandomLevel);
 	}
+	//In ra Skiplist
 	else if (command == "Print") {
 		printList(list);
 	}
+	//In ra các thông số về max level và kích thước ở các level
 	else if (command == "Size") {
 		printSizeOfList(list);
 	}
+	//Tìm kiếm node có giá trị val
+	//In ra level hiện tại của node đó và các node mà nó đã đi qua
 	else if (command == "Search") {
 		int val = stoi(argumentList[1]);
 
 		searchValue(val, list);
 	}
+	//Thêm Node mới có giá trị val
 	else if (command == "Insert") {
 		int val;
 		bool isRandomLevel = false;
+		//Nếu có tham số -r thì tạo level cho node ngẫu nhiên
 		if (argumentList[1] == "-r") {
 			val = stoi(argumentList[2]);
 			isRandomLevel = true;
 		}
+		//Ngược lại tạo level cho node dựa trên value của nó
 		else val = stoi(argumentList[1]);
 
 		addNode(val, list, isRandomLevel);
 	}
+	//Xóa Node có giá trị val
 	else if (command == "Remove") {
 		int val = stoi(argumentList[1]);
 
 		removeNode(val, list);
 	}
+	//Thoát chương trình
 	else if (command == "Exit") exit(0);
+	//Thông báo câu lệnh không chính xác
 	else cout << "Command not found\n";
 }

@@ -10,7 +10,7 @@ using namespace std;
 //Cấu trúc Node của Skiplist
 struct SNode {
 	int value;
-	int currentLevel;
+	int level;
 	int* width;
 	SNode** next;
 };
@@ -25,7 +25,7 @@ struct SkipList {
 };
 
 //Tạo node mới
-SNode* createNode(int value, int currentLevel);
+SNode* createNode(int value, int level);
 
 //Khởi tạo Skiplist
 void initList(SkipList& list);
