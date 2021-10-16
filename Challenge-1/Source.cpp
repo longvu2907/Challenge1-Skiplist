@@ -56,9 +56,8 @@ void increaseMaxLevel(SkipList& list, int val, bool isRandomLevel) {
 	SNode* prevHead = list.head;
 
 	//Nếu phát sinh level ngẫu nhiên thì tăng max level dựa trên kích thước của Skiplist
-	if (isRandomLevel) list.maxLevel = ceil(log2(list.size + 2));
-
 	//Ngược lại tăng max level dựa trên value của node mới thêm
+	if (isRandomLevel) list.maxLevel = ceil(log2(list.size + 2));
 	else list.maxLevel = max(int(ceil(log2(val + 1))), list.maxLevel);
 
 	//Tạo ra head mới với max level mới tính được
@@ -223,8 +222,7 @@ void removeNode(int value, SkipList& list) {
 void printSizeOfList(SkipList list) {
 	if (list.head->next[0] == NULL) {
 		cout << "List is empty" << endl;
-	}
-	else {
+	} else {
 		cout << "Max Level: " << list.maxLevel << endl;
 		for (int i = 0; i < list.currentLevel; i++) {
 			cout << "size of Level " << i + 1 << ": ";
@@ -332,14 +330,13 @@ void handleCommandLine(string commandLine, SkipList& list) {
 		int i = 0;
 
 		//Nếu có tham số -r thì tạo level cho các node ngẫu nhiên
+		//Ngược lại tạo level cho node dựa trên value của nó
 		if (argumentList[1] == "-r") {
 			i = 1;
 			n = stoi(argumentList[2]) + 1;
 			isRandomLevel = true;
-		} 
+		} else n = stoi(argumentList[1]);
 
-		//Ngược lại tạo level cho node dựa trên value của nó
-		else n = stoi(argumentList[1]);
 		int* arr = new int[n];
 
 		for (i = 0; i < n; i++) {
@@ -347,51 +344,39 @@ void handleCommandLine(string commandLine, SkipList& list) {
 		}
 
 		buildList(arr, n, list, isRandomLevel);
-	}
-
-	//In ra Skiplist
-	else if (command == "Print") {
+	} else if (command == "Print") {
+		//In ra Skiplist
 		printList(list);
-	}
-
-	//In ra các thông số về max level và kích thước ở các level
-	else if (command == "Size") {
+	} else if (command == "Size") {
+		//In ra các thông số về max level và kích thước ở các level
 		printSizeOfList(list);
-	}
+	} else if (command == "Search") {
+		//Tìm kiếm node có giá trị val
+		//In ra level hiện tại của node đó và các node mà nó đã đi qua
 
-	//Tìm kiếm node có giá trị val
-	//In ra level hiện tại của node đó và các node mà nó đã đi qua
-	else if (command == "Search") {
 		int val = stoi(argumentList[1]);
 
 		searchValue(val, list);
-	}
+	} else if (command == "Insert") {
+		//Thêm Node mới có giá trị val
 
-	//Thêm Node mới có giá trị val
-	else if (command == "Insert") {
 		int val;
 		bool isRandomLevel = false;
+
 		//Nếu có tham số -r thì tạo level cho node ngẫu nhiên
+		//Ngược lại tạo level cho node dựa trên value của nó
 		if (argumentList[1] == "-r") {
 			val = stoi(argumentList[2]);
 			isRandomLevel = true;
-		}
-		//Ngược lại tạo level cho node dựa trên value của nó
-		else val = stoi(argumentList[1]);
+		} else val = stoi(argumentList[1]);
 
 		addNode(val, list, isRandomLevel);
-	}
+	} else if (command == "Remove") {
+		//Xóa Node có giá trị val
 
-	//Xóa Node có giá trị val
-	else if (command == "Remove") {
 		int val = stoi(argumentList[1]);
 
 		removeNode(val, list);
-	}
-
-	//Thoát chương trình
-	else if (command == "Exit") exit(0);
-
-	//Thông báo câu lệnh không chính xác
-	else cout << "Command not found\n";
+	} else if (command == "Exit") exit(0); //Thoát chương trình
+	else cout << "Command not found\n"; //Thông báo câu lệnh không chính xác
 }
