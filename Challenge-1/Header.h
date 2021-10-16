@@ -32,6 +32,7 @@ void initList(SkipList& list);
 
 //Phát sinh level ngẫu nhiên
 int randomLevel(SkipList list);
+
 //Level dựa trên value
 int levelBasedOnVal(int val);
 
@@ -40,6 +41,7 @@ void increaseMaxLevel(SkipList& list, int val, bool isRandomLevel);
 
 //Đếm số lượng chữ số (để in danh sách Skiplist)
 int countDigits(int val);
+
 //Lấy ra Node bởi index của nó
 SNode* getByIndex(int index, SkipList list);
 
